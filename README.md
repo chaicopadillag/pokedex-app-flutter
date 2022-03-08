@@ -1,6 +1,6 @@
 # App Pokedex By Next JS
 
-Demo: 👉 [Click para ver el Demo](https://pokedex-next-js.vercel.app)
+Demo: 👉 [Click para ver el Demo](https://pokedex-next-js-v2.vercel.app)
 
 ## Screen Shot App
 
