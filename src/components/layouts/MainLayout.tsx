@@ -11,7 +11,7 @@ export const MainLayout: FC<LayoutProps> = ({ children, title }) => {
   return (
     <>
       <Head>
-        <title>{title ?? 'Pokemon GO'}</title>
+        <title>{title?.toUpperCase() ?? 'Pokemon GO'}</title>
         <meta name='autor' content='Dev Chaico' />
         <meta name='description' content='App de Pokemones' />
         <meta name='keywords' content='pickachu,pokemon,pokedex' />
