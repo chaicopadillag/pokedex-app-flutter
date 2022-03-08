@@ -7,6 +7,7 @@ import { MainLayout } from '../../components/layouts';
 import { Pokemon } from '../../interfaces/IPokemonResponse';
 import { apiAxios } from '../../api';
 import { IPokemonsResponse } from '../../interfaces/IPokemonsResponse';
+import { getPokemonByIdOrName } from '../../utils/pokedexApi';
 
 type PokemonPageProps = {
   pokemon: Pokemon;
@@ -101,21 +102,27 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
 
   return {
     paths,
-    fallback: false,
+    fallback: 'blocking',
   };
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const { name } = params as { name: string };
-  const { data } = await apiAxios.get<Pokemon>(`/pokemon/${name}`);
-  const pokemon = {
-    id: data.id,
-    name: data.name,
-    sprites: data.sprites,
-  };
+  const pokemon = await getPokemonByIdOrName(name);
+
+  if (!pokemon) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      },
+    };
+  }
+
   return {
     props: {
       pokemon,
     },
+    revalidate: 86400, //60*60*24
   };
 };

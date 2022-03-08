@@ -6,6 +6,7 @@ import confetti from 'canvas-confetti';
 import { apiAxios } from '../../api';
 import { MainLayout } from '../../components/layouts';
 import { Pokemon } from '../../interfaces/IPokemonResponse';
+import { getPokemonByIdOrName } from '../../utils/pokedexApi';
 
 type PokemonPageProps = {
   pokemon: Pokemon;
@@ -89,24 +90,27 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
 
   return {
     paths: pokemons151.map((id) => ({ params: { id } })),
-    fallback: false,
+    fallback: 'blocking',
   };
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const { id } = params as { id: string };
-  const { data } = await apiAxios.get<Pokemon>(`/pokemon/${id}`);
-
-  const pokemon = {
-    id: data.id,
-    name: data.name,
-    sprites: data.sprites,
-  };
+  const pokemon = await getPokemonByIdOrName(id);
+  if (!pokemon) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      },
+    };
+  }
 
   return {
     props: {
       pokemon,
     },
+    revalidate: 86400, //60*60*24
   };
 };
 
