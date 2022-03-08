@@ -1,10 +1,12 @@
-import { Button, Card, Container, Grid, Row, Text } from '@nextui-org/react';
+import { FC, useState } from 'react';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import Image from 'next/image';
-import React, { FC, useEffect, useState } from 'react';
-import { apiAxios } from '../../api';
+import { Button, Card, Container, Grid, Text } from '@nextui-org/react';
+import confetti from 'canvas-confetti';
 import { MainLayout } from '../../components/layouts';
 import { Pokemon } from '../../interfaces/IPokemonResponse';
+import { apiAxios } from '../../api';
+import { IPokemonsResponse } from '../../interfaces/IPokemonsResponse';
 
 type PokemonPageProps = {
   pokemon: Pokemon;
@@ -18,7 +20,7 @@ const hasPokemonInFavorites = (id: number): boolean => {
   return favorites.includes(id);
 };
 
-const PokemonPage: FC<PokemonPageProps> = ({ pokemon }) => {
+const PokemonByNamePage: FC<PokemonPageProps> = ({ pokemon }) => {
   const [isInFavorite, setIsInFavorite] = useState(hasPokemonInFavorites(pokemon.id));
 
   const handleToggleFavorite = () => {
@@ -32,6 +34,19 @@ const PokemonPage: FC<PokemonPageProps> = ({ pokemon }) => {
 
     localStorage.setItem('favorites', JSON.stringify(favorites));
     setIsInFavorite(!isInFavorite);
+
+    if (isInFavorite) return;
+
+    confetti({
+      zIndex: 100,
+      particleCount: 100,
+      spread: 160,
+      angle: -100,
+      origin: {
+        x: 1,
+        y: 0,
+      },
+    });
   };
 
   return (
@@ -63,13 +78,6 @@ const PokemonPage: FC<PokemonPageProps> = ({ pokemon }) => {
                 <Image src={pokemon.sprites.back_shiny} alt={pokemon.name} width={100} height={100} />
               </Container>
             </Card.Body>
-            {/* <Card.Footer>
-              <Row wrap='wrap'>
-                <Text b transform='capitalize'>
-                  {pokemon.types.map((type) => type.type.name).join(', ')}
-                </Text>
-              </Row>
-            </Card.Footer> */}
           </Card>
         </Grid>
       </Grid.Container>
@@ -77,23 +85,37 @@ const PokemonPage: FC<PokemonPageProps> = ({ pokemon }) => {
   );
 };
 
+export default PokemonByNamePage;
+
 export const getStaticPaths: GetStaticPaths = async (ctx) => {
-  const pokemons151 = [...Array(151)].map((_, index) => `${index + 1}`);
+  const { data } = await apiAxios.get<IPokemonsResponse>('/pokemon', {
+    params: {
+      limit: 151,
+    },
+  });
+  const paths = data.results.map((pokemon) => ({
+    params: {
+      name: pokemon.name,
+    },
+  }));
+
   return {
-    paths: pokemons151.map((id) => ({ params: { id } })),
+    paths,
     fallback: false,
   };
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
-  const { id } = params as { id: string };
-  const { data } = await apiAxios.get<Pokemon>(`/pokemon/${id}`);
-
+  const { name } = params as { name: string };
+  const { data } = await apiAxios.get<Pokemon>(`/pokemon/${name}`);
+  const pokemon = {
+    id: data.id,
+    name: data.name,
+    sprites: data.sprites,
+  };
   return {
     props: {
-      pokemon: data,
+      pokemon,
     },
   };
 };
-
-export default PokemonPage;
